@@ -3,7 +3,7 @@ import { View, StyleSheet, Text } from "react-native";
 
 const Playlists = () => {
     return (
-        <View style={styles.container}><Text>Playlists</Text></View>
+        <View style={styles.container}></View>
     );
 }
 

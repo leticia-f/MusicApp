@@ -2,15 +2,27 @@ import React, {Component} from 'react'
 import { Text, ScrollView, View, StyleSheet, Dimensions } from 'react-native'
 import {AudioContext} from '../context/AudioProvider'
 import {RecyclerListView, LayoutProvider} from 'recyclerlistview'
+import {AudioListItem} from '../components/AudioListItem'
+import Screen from '../components/Screen'
+import OptionModal from '../components/OptionModal'
 
 export class AudioList extends Component {
     static contextType = AudioContext;
+
+    constructor(props){
+        super(props);
+        this.state = {
+            OptionModalVisible: false,
+        }
+
+        this.currentItem = {}
+    }
 
     layoutProvider = new LayoutProvider((i) => 'audio', (type, dim) => {
         switch(type){
             case 'audio':
                 dim.width = Dimensions.get('window').width;
-                dim.height = 50;
+                dim.height = 80; //espaço entre itens
                 break;
                 default:
                 dim.width = 0;
@@ -19,13 +31,31 @@ export class AudioList extends Component {
     })
 
     rowRenderer = (type, item) => {
-        return<Text style={{padding:15, borderBottomWidth:1, borderBottomColor:'#D3D3D3'}}>{item.filename}</Text>
+        return <AudioListItem
+            title={item.filename}
+            duration={item.duration}
+            onOptionPress={() => {
+                this.currentItem = item
+                this.setState({...this.state, OptionModalVisible: true})
+            }}/>        
     }
 
     render() {
         return <AudioContext.Consumer>
             {({dataProvider}) => {
-                return<View style={{flex:1}}><RecyclerListView dataProvider={dataProvider} layoutProvider={this.layoutProvider} rowRenderer={this.rowRenderer}/></View>
+                return<Screen>
+                    <RecyclerListView
+                    dataProvider={dataProvider}
+                    layoutProvider={this.layoutProvider}
+                    rowRenderer={this.rowRenderer}/>
+                    <OptionModal
+                    onPlayPress={() => {}}
+                    onPlaylistPress={() => {}}
+                    currentItem={this.currentItem}
+                    onClose={() =>
+                        this.setState({...this.state, OptionModalVisible:false})}
+                    visible={this.state.OptionModalVisible}/>
+                </Screen>
             }}
         </AudioContext.Consumer>
     }

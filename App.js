@@ -8,24 +8,10 @@ import AudioListItem from './app/components/AudioListItem';
 
 export default function App() {
   return (
-    <View>
-    {/* <AudioProvider>
+    <AudioProvider>
       <NavigationContainer>
-        <AppNavigator/>
+          <AppNavigator/>
       </NavigationContainer>
-    </AudioProvider> */}
-      <View style={{marginTop:50}}>
-        <AudioListItem/>
-      </View>
-    </View>
+    </AudioProvider>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

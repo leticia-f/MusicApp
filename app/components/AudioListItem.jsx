@@ -3,25 +3,53 @@ import React from 'react'
 import { Entypo } from '@expo/vector-icons';
 import color from '../misc/color';
 
-const AudioListItem = () => {
+const getImageText = (filename) =>{
+    return filename[0] //pega inicial do nome do arquivo
+}
+
+const convertTime = minutes => {
+    if(minutes){
+        const hrs = minutes/60;
+        const minute = hrs.toString().split('.')[0];
+        const percent = parseInt(hrs.toString().split('.')[1].slice(0,2));
+        const sec = Math.ceil((60*percent)/100)
+
+        if(parseInt(minute)<10 && sec<10){
+            return `0${minute}:0${sec}`;
+        }
+        if(parseInt(minute)<10){
+            return `0${minute}:${sec}`;
+        }
+        if(sec<10){
+            return `${minute}:${sec}`;
+        }
+
+        return `${minute}:${sec}`;
+    }
+}
+
+export const AudioListItem = ({title, duration, onOptionPress}) => {
   return (
     <>
     <View style={styles.container}>
         <View style={styles.leftContainer}>
-            <View style={styles.image}>
-                <Text style={styles.imageText}>A</Text>
-            </View>
+            <View style={styles.image}><Text style={styles.imageText}>{getImageText(title)}</Text></View>
             <View style={styles.titleContainer}>
-                <Text numberOfLines={1} style={styles.title}>Song title</Text>
-                <Text style={styles.time}>Artist</Text>
+                <Text numberOfLines={1} style={styles.title}>
+                    {title}
+                </Text>
+                <Text style={styles.time}>
+                    {convertTime(duration)}
+                </Text>
             </View>
         </View>
 
         <View style={styles.rightContainer}>
-            <Entypo name="dots-three-vertical" size={24} color="black" />
+            <Entypo onPress={onOptionPress} name="dots-three-vertical" size={24} color="black" style={{padding:12}}/>
         </View>
     </View>
-    <View style={styles.separator} />
+    <View style={styles.separator}/>
+    
     </>
   )
 }
@@ -33,6 +61,8 @@ const styles = StyleSheet.create ({
         flexDirection:'row',
         alignSelf:'center',
         width:width-80,
+        marginTop:15,
+        marginBottom:15,
     },
     leftContainer:{
         flexDirection:'row',
@@ -48,7 +78,7 @@ const styles = StyleSheet.create ({
     image:{
         height:50,
         flexBasis:50,
-        backgroundColor: '#DCDCDC',
+        backgroundColor: '#C97B7B',
         justifyContent:'center',
         alignItems:'center',
         borderRadius:10,
@@ -56,7 +86,7 @@ const styles = StyleSheet.create ({
     imageText:{
         fontSize:25,
         fontWeight:'bold',
-        color: '#C97B7B',
+        color: '#FFF',
     },
     titleContainer:{
         width:width-185,
@@ -68,18 +98,15 @@ const styles = StyleSheet.create ({
         color: '#000',
     },
     separator:{
-        width:width-80,
+        width:width-100,
         backgroundColor: '#D3D3D3',
         height:0.5,
-        opacity:0.3,
-        alignSelf: 'center',
+        alignSelf:'center',
         alignItems:'center',
-        marginTop:10,
+        marginTop:0,
     },
     time:{
         fontSize:12,
         color:'grey',
     }
 })
-
-export default AudioListItem;
