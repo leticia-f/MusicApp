@@ -3,7 +3,7 @@ import { View, StyleSheet, StatusBar, Modal, Text, TouchableWithoutFeedback, Edg
 import color from "../misc/color";
 
 const OptionModal = ({ visible, currentItem, onClose, onPlayPress, onPlaylistPress }) => {
-    const { filename } = currentItem
+    const {filename} = currentItem
 
     return (
         <>
@@ -13,10 +13,10 @@ const OptionModal = ({ visible, currentItem, onClose, onPlayPress, onPlaylistPre
                     <Text style={styles.title} numberOfLines={2}>{filename}</Text>
                     <View style={styles.optionContainer}>
                         <TouchableWithoutFeedback onPress={onPlayPress}>
-                            <Text style={styles.option}>Play</Text>
+                            <Text style={styles.option}>Reproduzir</Text>
                         </TouchableWithoutFeedback>
                         <TouchableWithoutFeedback onPress={onPlaylistPress}>
-                            <Text style={styles.option}>Add to playlist</Text>
+                            <Text style={styles.option}>Adicionar à playlist</Text>
                         </TouchableWithoutFeedback>
                     </View>
                 </View>

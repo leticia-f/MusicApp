@@ -1,17 +1,25 @@
 import react from "react";
-import { View, StyleSheet, Text } from "react-native";
+import { View, StyleSheet, Text, StatusBar } from "react-native";
+import Screen from "../components/Screen";
 
 const Player = () => {
     return (
-        <View style={styles.container}></View>
+        <Screen>
+            <View style={styles.container}>
+                <Text style={styles.audioCount}>ABCDE</Text>
+            </View>
+        </Screen>
     );
 }
 
 const styles = StyleSheet.create({
     container:{
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+    },
+    audioCount:{
+        alignSelf:'center',
+        padding: StatusBar.currentHeight,
+        fontSize:16,
     }
 })
 
