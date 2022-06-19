@@ -6,10 +6,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import PlayerButton from "../components/PlayerButton";
 import { AudioContext } from "../context/AudioProvider";
-import { pause, play, resume } from "../misc/audioController";
+import { pause, play, resume, playNext, selectAudio, changeAudio } from "../misc/audioController";
 import { playbackObj, soundObj } from 'expo-av'
-
-const {width} = Dimensions.get('window')
+import { storeAudioForNextOpening } from "../misc/helper";
+import { convertTime } from "../misc/helper";
 
 function removeExtension(filename) {
     return filename.replace(/\.[^\/.]+$/, '');
@@ -33,72 +33,171 @@ const Player = () => {
         context.loadPreviousAudio()
     }, [])
 
+
     const handlePlayPause = async() => { //controlar áudio pelo player
-        if(context.soundObj===null){ //pra áudio dar play
-            const audio = context.currentAudio
-            const status = await play(context.playbackObj,audio.uri)
-            return context.updateState(context, {
-                soundObj:status,
-                currentAudio:audio,
-                isPlaying:true,
-                currentAudioIndex:context.currentAudioIndex,
-            })
-        }
+        await selectAudio(context.currentAudio, context)
+        // if(context.soundObj===null){ //pra áudio dar play
+        //     const audio = context.currentAudio
+        //     const status = await play(context.playbackObj,audio.uri)
+        //     context.playbackObj.setOnPlaybackStatusUpdate(context.onPlaybackStatusUpdate) 
 
-        if(context.soundObj && context.soundObj.isPlaying){ //pra áudio dar pause
-            const status = await pause(context.playbackObj)
-            return context.updateState(context, {
-                soundObj:status,
-                isPlaying:false,
-            })
-        }
+        //     return context.updateState(context, {
+        //         soundObj:status,
+        //         currentAudio:audio,
+        //         isPlaying:true,
+        //         currentAudioIndex:context.currentAudioIndex,
+        //     })
+        // }
 
-        if(context.soundObj && !context.soundObj.isPlaying){ //pra áudio continuar
-            const status = await resume(context.playbackObj)
-            return context.updateState(context, {
-                soundObj:status,
-                isPlaying:true,
-            })
-        }
+        // if(context.soundObj && context.soundObj.isPlaying){ //pra áudio dar pause
+        //     const status = await pause(context.playbackObj)
+        //     return context.updateState(context, {
+        //         soundObj:status,
+        //         isPlaying:false,
+        //     })
+        // }
+
+        // if(context.soundObj && !context.soundObj.isPlaying){ //pra áudio continuar
+        //     const status = await resume(context.playbackObj)
+        //     return context.updateState(context, {
+        //         soundObj:status,
+        //         isPlaying:true,
+        //     })
     }
 
+
+    const handleNext = async() => { //botão de próximo
+        await changeAudio(context,'next')
+        // // const {isLoaded} = await context.playbackObj.getStatusAsync()
+        // // const isLastAudio = context.currentAudioIndex+1===context.totalAudioCount
+        // // let audio = context.audioFiles[context.currentAudioIndex+1]
+        // // let index
+        // // let status
+
+        // // //app rodando pela primeira vez, música não é a última
+        // // if(!isLoaded && !isLastAudio){
+        // //     index = context.currentAudioIndex+1
+        // //     status = await play(context.playbackObj,audio.uri)
+        // // }
+        // // if(isLoaded && !isLastAudio){
+        // //     index = context.currentAudioIndex+1
+        // //     status = await playNext(context.playbackObj,audio.uri)
+        // // }
+        // // if(isLastAudio){
+        // //     index = 0
+        // //     audio = context.audioFiles[index]
+            
+        // //     if(isLoaded){
+        // //         status = await playNext(context.playbackObj,audio.uri)
+        // //     } else{
+        // //         status = await play(context.playbackObj,audio.uri)
+        // //     }
+        // // }
+
+        // context.updateState(context, {currentAudio:audio,
+        //     playbackObj:context.playbackObj, soundObj:status,
+        //     isPlaying:true, currentAudioIndex:index,
+        //     playbackPosition: null, playbackDuration: null});
+        // storeAudioForNextOpening(audio,index)
+    }
+
+
+    const handlePrev = async() => { //botão de prévio(?)
+        await changeAudio(context,'previous')
+        // const {isLoaded} = await context.playbackObj.getStatusAsync()
+        // const isFirstAudio = context.currentAudioIndex<=0
+        // let audio = context.audioFiles[context.currentAudioIndex-1]
+        // let index
+        // let status
+
+        // //app rodando pela primeira vez, música não é a primeira
+        // if(!isLoaded && !isFirstAudio){
+        //     index = context.currentAudioIndex-1
+        //     status = await play(context.playbackObj,audio.uri)
+        // }
+        // if(isLoaded && !isFirstAudio){
+        //     index = context.currentAudioIndex-1
+        //     status = await playNext(context.playbackObj,audio.uri)
+        // }
+        // if(isFirstAudio){
+        //     index = context.totalAudioCount-1
+        //     audio = context.audioFiles[index]
+            
+        //     if(isLoaded){
+        //         status = await playNext(context.playbackObj,audio.uri)
+        //     } else{
+        //         status = await play(context.playbackObj,audio.uri)
+        //     }
+        
+
+        // context.updateState(context, {currentAudio:audio,
+        //     playbackObj:context.playbackObj, soundObj:status,
+        //     isPlaying:true, currentAudioIndex:index,
+        //     playbackPosition: null, playbackDuration: null});
+        // storeAudioForNextOpening(audio,index)
+    }
+
+
+    const renderCurrentTime = () => {
+        return convertTime(context.playbackPosition / 1000)
+    }
+
+
     if(!context.currentAudio) return null;
+
 
     return (
         <Screen>
             <View style={styles.container}>
                 {/* context.currentAudioIndex + 1 pra tirar o index 0 */}
                 <Text style={styles.audioCount}>{`${context.currentAudioIndex+1} / ${context.totalAudioCount}`}</Text>
-                <View style={styles.midBannerContainer}><MaterialCommunityIcons name="music-box" size={300} color={context.isPlaying?'#C97B7B':'#EA9997'} /></View>
+
+                <View style={styles.midBannerContainer}>
+                    <MaterialCommunityIcons name="music-box" size={300} color={context.isPlaying?color.pink_active:color.pink_inactive} />
+                </View>
+                
                 <View style={styles.audioPlayerContainer}>
-                    <Text numberOfLines={1} style={styles.title}>{context.currentAudio.filename}</Text>
+                    
+                    <Text numberOfLines={2} style={styles.title}>{removeExtension(context.currentAudio.filename)}</Text>
+            
+                    
                     <Slider
-                        style={{width: width, height: 40}}
-                        minimumValue={0}
-                        maximumValue={1}
-                        value={calculateSeekBar()}
-                        thumbTintColor={context.isPlaying?'#C97B7B':'#EA9997'}
-                        minimumTrackTintColor={context.isPlaying?'#C97B7B':'#EA9997'}
-                        maximumTrackTintColor="#000"/>
-                        <View style={styles.audioControllers}>
-                            <PlayerButton iconType='PREV'/>
-                            <PlayerButton
-                                onPress={handlePlayPause}
-                                style={{marginHorizontal:26}}
-                                iconType={context.isPlaying?'PLAY':'PAUSE'}/>
-                            <PlayerButton iconType='NEXT'/>
-                        </View>
+                    style={{width: width, height: 30}}
+                    minimumValue={0}
+                    maximumValue={1}
+                    value={calculateSeekBar()}
+                    thumbTintColor={context.isPlaying?color.pink_active:color.pink_inactive}
+                    minimumTrackTintColor={context.isPlaying?color.pink_active:color.pink_inactive}
+                    maximumTrackTintColor="#000"/>
+                    
+                    <View style={styles.liveTimestamps}>
+                        <Text>{renderCurrentTime()}</Text>
+                        <Text>{convertTime(context.currentAudio.duration)}</Text>
+                    </View>
+
+                    <View style={styles.audioControllers}>
+                        <PlayerButton iconType='PREV' onPress={handlePrev}/>
+                        <PlayerButton
+                            onPress={handlePlayPause}
+                            style={{marginHorizontal:26}}
+                            iconType={context.isPlaying?'PLAY':'PAUSE'}/>
+                        <PlayerButton iconType='NEXT' onPress={handleNext}/>
+
+                    </View>
+
                 </View>
             </View>
         </Screen>
     );
 }
 
+const {width} = Dimensions.get('window')
+
 const styles = StyleSheet.create({
     container:{
         flex: 1,
         alignSelf:'center',
-        paddingVertical:75,
+        paddingVertical:60,
     },
     audioCount:{
         alignSelf:'center',
@@ -114,8 +213,9 @@ const styles = StyleSheet.create({
     title:{
         fontSize:20,
         fontWeight:'bold',
-        marginLeft:20,
-        marginBottom:13,
+        marginLeft:25,
+        marginBottom:20,
+        width: width-50
     },
     audioControllers:{
         width,
@@ -123,6 +223,12 @@ const styles = StyleSheet.create({
         justifyContent:'center',
         alignItems:'center',
         paddingVertical:10,
+    },
+    liveTimestamps:{
+        flexDirection:'row',
+        width:width-50,
+        justifyContent:'space-between',
+        marginLeft:25
     }
 })
 

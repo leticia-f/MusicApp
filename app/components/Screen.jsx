@@ -11,7 +11,7 @@ const Screen = ({children}) => { //desestrutura children
 const styles = StyleSheet.create ({
     container:{
         flex:1,
-        backgroundColor:color.font_light,
+        backgroundColor:color.app_bg,
     },
 })
 

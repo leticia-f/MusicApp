@@ -1,5 +1,5 @@
 import react from "react";
-import { View, StyleSheet, StatusBar, Modal, Text, TouchableWithoutFeedback, EdgeInsetsPropType } from 'react-native'
+import { View, StyleSheet, StatusBar, Modal, Text, TouchableWithoutFeedback } from 'react-native'
 import color from "../misc/color";
 
 function removeExtension(filename) {
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
         bottom: 0,
         right: 0,
         left: 0,
-        backgroundColor: '#FFF',
+        backgroundColor: color.modal_color,
         borderTopLeftRadius: 15,
         borderTopRightRadius: 15,
         zIndex: 1000,

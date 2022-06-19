@@ -4,14 +4,19 @@ import * as MediaLibrary from 'expo-media-library'
 import {DataProvider} from 'recyclerlistview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Audio} from 'expo-av'
+import { storeAudioForNextOpening } from '../misc/helper';
+import { playNext } from '../misc/audioController';
 
 export const AudioContext = createContext();
 
 export class AudioProvider extends Component {
+
     constructor(props){
         super(props)
         this.state = {
             audioFiles:[],
+            playlist:[],
+            addToPlaylist:null,
             permissionError:false,
             dataProvider:new DataProvider((r1,r2)=>r1!==r2),
             playbackObj:null,
@@ -25,6 +30,9 @@ export class AudioProvider extends Component {
         this.totalAudioCount=0
     }
 
+
+
+
     permissionAlert = () => {
         Alert.alert("Permissão necessária",
             "Este app precisa de acesso aos arquivos de áudio do dispositivo para funcionar.", [
@@ -33,6 +41,9 @@ export class AudioProvider extends Component {
                 {text:"Permitir",
                 onPress: () => this.getPermission() }])
     }
+
+
+
 
     getAudioFiles = async() => {
         const {dataProvider, audioFiles} = this.state 
@@ -43,6 +54,9 @@ export class AudioProvider extends Component {
 
         this.setState({... this.state, dataProvider:dataProvider.cloneWithRows([...audioFiles, ...media.assets]), audioFiles:[...audioFiles, ...media.assets]})
     }
+
+
+
 
     loadPreviousAudio = async() => {
         let previousAudio = await AsyncStorage.getItem('previousAudio')
@@ -61,6 +75,9 @@ export class AudioProvider extends Component {
 
         this.setState({...this.state, currentAudio, currentAudioIndex})
     }
+
+
+
 
     getPermission = async() => { // async: em segundo plano, é uma janela
         const permission = await MediaLibrary.getPermissionsAsync()
@@ -92,6 +109,51 @@ export class AudioProvider extends Component {
         }
     }
 
+
+
+
+    onPlaybackStatusUpdate = async(playbackStatus) => {
+        if(playbackStatus.isLoaded && playbackStatus.isPlaying){
+            this.updateState(this, {
+                playbackPosition: playbackStatus.positionMillis,
+                playbackDuration: playbackStatus.durationMillis,
+            })
+        }
+        
+        if(playbackStatus.didJustFinish){ // checa se o áudio acabou e se sim passa pro próximo
+            const nextAudioIndex = this.state.currentAudioIndex+1
+            
+            if(nextAudioIndex >= this.totalAudioCount){ //não tem mais "próximo"
+                this.state.playbackObj.unloadAsync()
+                this.updateState(this, {
+                    soundObj:null,
+                    currentAudio:this.state.audioFiles[0],
+                    isPlaying:false,
+                    currentAudioIndex:0,
+                    playbackPosition:null,
+                    playbackDuration:null,
+                })
+                return await storeAudioForNextOpening(this.state.audioFiles[0], 0)
+            }
+
+            //caso contrário, selecionando próximo áudio
+            const audio = this.state.audioFiles[nextAudioIndex]
+            const status = await playNext(this.state.playbackObj, audio.uri)
+            
+            this.updateState(this, {
+                soundObj:status,
+                currentAudio:audio,
+                isPlaying:true,
+                currentAudioIndex:nextAudioIndex,
+            })
+
+            await storeAudioForNextOpening(audio, nextAudioIndex)
+        }
+    }
+
+
+
+
     componentDidMount(){
         this.getPermission() // pedir permissão ao usuário para acessar arquivos
         if(this.state.playbackObj===null){
@@ -99,12 +161,20 @@ export class AudioProvider extends Component {
         }
     }
 
+
+
+
     updateState = (prevState,newState = {}) => {
         this.setState({...prevState, ...newState})
     }
 
+
+
+
     render() {
         const {audioFiles,
+            playlist,
+            addToPlaylist,
             dataProvider,
             permissionError,
             playbackObj,
@@ -127,6 +197,8 @@ export class AudioProvider extends Component {
         return (
             <AudioContext.Provider value={{
                 audioFiles,
+                playlist,
+                addToPlaylist,
                 dataProvider,
                 playbackObj,
                 soundObj,
@@ -136,6 +208,7 @@ export class AudioProvider extends Component {
                 totalAudioCount: this.totalAudioCount,
                 playbackPosition,
                 playbackDuration,
+                onPlaybackStatusUpdate: this.onPlaybackStatusUpdate,
                 loadPreviousAudio: this.loadPreviousAudio,
                 updateState: this.updateState}}>
                 {this.props.children}

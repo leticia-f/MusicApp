@@ -45,7 +45,7 @@ export const AudioListItem = ({ title, duration, onOptionPress, onAudioPress, is
                 
                 <View style={styles.leftContainer}>
 
-                    <View style={[styles.image, {backgroundColor:activeListItem?'#C97B7B':'#EA9997'}]}>
+                    <View style={[styles.image, {backgroundColor:activeListItem?color.pink_active:color.pink_inactive}]}>
                         <Text style={styles.imageText}>
                             {activeListItem?renderPlayPauseIcon(isPlaying):getImageText(title)}
                             {/* if(activeListItem=true){
@@ -56,7 +56,7 @@ export const AudioListItem = ({ title, duration, onOptionPress, onAudioPress, is
                     </View>
 
                     <View style={styles.titleContainer}>
-                        <Text numberOfLines={1} style={[styles.title, {color:activeListItem?'#C97B7B':'#000'}]}>
+                        <Text numberOfLines={1} style={[styles.title, {color:activeListItem?color.pink_active:color.font}]}>
                             {removeExtension(title)}
                         </Text>
                         <Text style={styles.time}>
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     image: {
         height: 50,
         flexBasis: 50,
-        backgroundColor: '#EA9997',
+        backgroundColor: color.pink_inactive,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 10,
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     imageText: {
         fontSize: 25,
         fontWeight: 'bold',
-        color: '#FFF',
+        color: color.font_light,
     },
     titleContainer: {
         width: width - 185,
@@ -122,11 +122,11 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#000',
+        color: color.font,
     },
     separator: {
         width: width - 100,
-        backgroundColor: '#D3D3D3',
+        backgroundColor: color.separator,
         height: 1,
         alignSelf: 'center',
         alignItems: 'center',
