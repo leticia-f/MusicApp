@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     separator: {
         width: width - 100,
         backgroundColor: '#D3D3D3',
-        height: 0.5,
+        height: 1,
         alignSelf: 'center',
         alignItems: 'center',
         marginTop: 0,

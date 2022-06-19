@@ -2,6 +2,10 @@ import react from "react";
 import { View, StyleSheet, StatusBar, Modal, Text, TouchableWithoutFeedback, EdgeInsetsPropType } from 'react-native'
 import color from "../misc/color";
 
+function removeExtension(filename) {
+    return filename.replace(/\.[^\/.]+$/, '');
+}
+
 const OptionModal = ({ visible, currentItem, onClose, onPlayPress, onPlaylistPress }) => {
     const {filename} = currentItem
 

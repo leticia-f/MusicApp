@@ -7,6 +7,7 @@ import Screen from '../components/Screen'
 import OptionModal from '../components/OptionModal'
 import {Audio} from 'expo-av'
 import {pause, play, resume, playNext} from '../misc/audioController'
+import { storeAudioForNextOpening } from '../misc/helper'
 
 export class AudioList extends Component {
     static contextType = AudioContext;
@@ -32,16 +33,63 @@ export class AudioList extends Component {
         }
     })
 
+    onPlaybackStatusUpdate = async(playbackStatus) => {
+        if(playbackStatus.isLoaded && playbackStatus.isPlaying){
+            this.context.updateState(this.context, {
+                playbackPosition: playbackStatus.positionMillis,
+                playbackDuration: playbackStatus.durationMillis,
+            })
+        }
+        
+        if(playbackStatus.didJustFinish){ // checa se o áudio acabou e se sim passa pro próximo
+            const nextAudioIndex = this.context.currentAudioIndex+1
+            
+            if(nextAudioIndex >= this.context.totalAudioCount){ //não tem mais "próximo"
+                this.context.playbackObj.unloadAsync()
+                this.context.updateState(this.context, {
+                    soundObj:null,
+                    currentAudio:this.context.audioFiles[0],
+                    isPlaying:false,
+                    currentAudioIndex:0,
+                    playbackPosition:null,
+                    playbackDuration:null,
+                })
+                return await storeAudioForNextOpening(this.context.audioFiles[0], 0)
+            }
+
+            //caso contrário, selecionando próximo áudio
+            const audio = this.context.audioFiles[nextAudioIndex]
+            const status = await playNext(this.context.playbackObj, audio.uri)
+            
+            this.context.updateState(this.context, {
+                soundObj:status,
+                currentAudio:audio,
+                isPlaying:true,
+                currentAudioIndex:nextAudioIndex,
+            })
+
+            await storeAudioForNextOpening(audio, nextAudioIndex)
+        }
+    }
+
     handleAudioPress = async(audio) => { //checar se tem áudio tocando, alternar áudios
-        const{soundObj, playbackObj, currentAudio, updateState, audioFiles} = this.context
+        const{soundObj,
+            playbackObj,
+            currentAudio,
+            updateState,
+            audioFiles} = this.context
 
         if(soundObj===null){ // nenhum áudio tocando
             const playbackObj = new Audio.Sound()
             const status = await play(playbackObj, audio.uri)
             const index = audioFiles.indexOf(audio)
-            return updateState(this.context, {currentAudio:audio,
+
+            updateState(this.context, {currentAudio:audio,
                 playbackObj:playbackObj, soundObj:status,
-                isPlaying:true, currentAudioIndex:index})
+                isPlaying:true, currentAudioIndex:index});
+
+            playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate)
+                return storeAudioForNextOpening(audio, index)
         }
 
         // pausa áudio quando - isLoaded: tem áudio carregado / isPlaying: tem áudio tocando
@@ -60,9 +108,14 @@ export class AudioList extends Component {
         if(soundObj.isLoaded && currentAudio.id!==audio.id){
             const status = await playNext(playbackObj, audio.uri)
             const index = audioFiles.indexOf(audio)
-            return updateState(this.context, {currentAudio:audio, 
+            updateState(this.context, {currentAudio:audio, 
                 soundObj:status, isPlaying:true, currentAudioIndex:index})
+            return storeAudioForNextOpening(audio, index)
         }
+    }
+
+    componentDidMount(){
+        this.context.loadPreviousAudio()
     }
 
     rowRenderer = (type, item, index, extendedState) => { // renderiza item
@@ -81,6 +134,7 @@ export class AudioList extends Component {
     render() { // renderiza lista e modal
         return <AudioContext.Consumer>
             {({dataProvider, isPlaying}) => {
+                if(!dataProvider._data.length) return null;
                 return<Screen>
                     <RecyclerListView // lista
                     dataProvider={dataProvider}
