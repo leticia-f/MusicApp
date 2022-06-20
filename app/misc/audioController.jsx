@@ -58,7 +58,7 @@ export const selectAudio = async(audio, context) => {
         // pausa áudio quando - isLoaded: tem áudio carregado / isPlaying: tem áudio tocando
         if(soundObj.isLoaded && soundObj.isPlaying && currentAudio.id===audio.id){
             const status = await pause(playbackObj)
-            return updateState(context, {soundObj:status, isPlaying:false})
+            return updateState(context, {soundObj:status, isPlaying:false, playbackPosition:status.positionMillis})
         }
     
         // continuar áudio quando está carregado mas não tocando
@@ -152,4 +152,16 @@ export const changeAudio = async(context, select) => {
     } catch (error) {
         console.log('erro no changeAudio -', error.message)
     }
+}
+
+export const moveAudio = async(context, value) => {
+    const {soundObj, isPlaying, playbackObj, updateState} = context
+    if(soundObj===null||!isPlaying) return
+    try {
+        //espera a posição ser setada e converte a duração
+        const status = await playbackObj.setPositionAsync(soundObj.durationMillis*value)
+        updateState(context, {soundObj:status, playbackPosition:status.positionMillis})
+    
+        await resume(playbackObj) //continuar música do ponto selecionado
+    } catch (error) {console.log('erro no onSlidingComplete-', error)}
 }

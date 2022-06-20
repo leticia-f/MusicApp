@@ -1,4 +1,4 @@
-import react, {useContext, useEffect} from "react";
+import react, {useContext, useEffect, useState} from "react";
 import { View, StyleSheet, Text, StatusBar, Dimensions } from "react-native";
 import Screen from "../components/Screen";
 import color from '../misc/color';
@@ -10,6 +10,7 @@ import { pause, play, resume, playNext, selectAudio, changeAudio } from "../misc
 import { playbackObj, soundObj } from 'expo-av'
 import { storeAudioForNextOpening } from "../misc/helper";
 import { convertTime } from "../misc/helper";
+import { moveAudio } from "../misc/audioController";
 
 function removeExtension(filename) {
     return filename.replace(/\.[^\/.]+$/, '');
@@ -17,6 +18,7 @@ function removeExtension(filename) {
 
 const Player = () => {
 
+    const [currentPosition, setCurrentPosition] = useState(0)
     const context = useContext(AudioContext)
     const {playbackPosition, playbackDuration} = context
 
@@ -159,7 +161,6 @@ const Player = () => {
                 <View style={styles.audioPlayerContainer}>
                     
                     <Text numberOfLines={2} style={styles.title}>{removeExtension(context.currentAudio.filename)}</Text>
-            
                     
                     <Slider
                     style={{width: width, height: 30}}
@@ -168,10 +169,25 @@ const Player = () => {
                     value={calculateSeekBar()}
                     thumbTintColor={context.isPlaying?color.pink_active:color.pink_inactive}
                     minimumTrackTintColor={context.isPlaying?color.pink_active:color.pink_inactive}
-                    maximumTrackTintColor="#000"/>
+                    maximumTrackTintColor="#000"
+                    onValueChange={(value) => {
+                        setCurrentPosition(convertTime(value*context.currentAudio.duration))
+                    }}
+                    onSlidingStart={ //pausar áudio quando começar a usar a seekbar
+                        async() => {
+                            if(!context.isPlaying) return
+                            try {
+                                await pause(context.playbackObj)
+                            } catch (error) {console.log('erro no onSlidingStart -', error)}
+                        }
+                    }
+                    onSlidingComplete={ 
+                        async(value) => {
+                            await moveAudio(context, value)
+                            setCurrentPosition(0)}}/>
                     
                     <View style={styles.liveTimestamps}>
-                        <Text>{renderCurrentTime()}</Text>
+                        <Text>{currentPosition?currentPosition:renderCurrentTime()}</Text>
                         <Text>{convertTime(context.currentAudio.duration)}</Text>
                     </View>
 
